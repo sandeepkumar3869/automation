@@ -19,20 +19,17 @@ from oauth2client.service_account import ServiceAccountCredentials
 #     return client
 
 def authenticate_google_sheets():
-    creds_b64 = os.getenv("GOOGLE_SHEETS_CREDENTIALS")
-    if not creds_b64:
+    encoded_creds = os.getenv("GOOGLE_SHEETS_CREDENTIALS")
+    if not encoded_creds:
         raise ValueError("Google Sheets credentials not found. Set GOOGLE_SHEETS_CREDENTIALS env variable.")
-
-    # Decode the Base64 string
-    creds_json = base64.b64decode(creds_b64).decode("utf-8")
-    creds_dict = json.loads(creds_json)
-
-    # Authenticate with Google Sheets
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, [
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/drive"
-    ])
-    return gspread.authorize(creds)
+    
+    # Decode and load credentials
+    creds_json = json.loads(base64.b64decode(encoded_creds).decode("utf-8"))
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_json, scope)
+    client = gspread.authorize(creds)
+    
+    return client
 
 client = authenticate_google_sheets()
 
