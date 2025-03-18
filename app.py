@@ -1,16 +1,40 @@
 import streamlit as st
 import pandas as pd
 import gspread
+import os
+import os
+import json
+import base64
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 from oauth2client.service_account import ServiceAccountCredentials
 
-# Google Sheets authentication
+# # Google Sheets authentication
+# def authenticate_google_sheets():
+#     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+#     creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
+#     # creds = ServiceAccountCredentials.from_json_keyfile_name("/etc/secrets/credentials.json", scope)
+#     # creds = ServiceAccountCredentials.from_json_keyfile_name("/opt/render/secrets/credentials.json", scope)
+#     client = gspread.authorize(creds)
+#     return client
+
 def authenticate_google_sheets():
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
-    # creds = ServiceAccountCredentials.from_json_keyfile_name("/etc/secrets/credentials.json", scope)
-    # creds = ServiceAccountCredentials.from_json_keyfile_name("/opt/render/secrets/credentials.json", scope)
-    client = gspread.authorize(creds)
-    return client
+    creds_b64 = os.getenv("GOOGLE_SHEETS_CREDENTIALS")
+    if not creds_b64:
+        raise ValueError("Google Sheets credentials not found. Set GOOGLE_SHEETS_CREDENTIALS env variable.")
+
+    # Decode the Base64 string
+    creds_json = base64.b64decode(creds_b64).decode("utf-8")
+    creds_dict = json.loads(creds_json)
+
+    # Authenticate with Google Sheets
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ])
+    return gspread.authorize(creds)
+
+client = authenticate_google_sheets()
 
 # Save data to Google Sheets
 def save_to_google_sheets(df):
